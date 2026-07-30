@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildMockFromRequest, buildOpenApiOperation, buildRequestJsonSchema } from "../src/lib/api-design.js";
+import {
+  buildMockFromRequest,
+  buildOpenApiOperation,
+  buildRequestJsonSchema,
+  validateResponseBodyAgainstRequest
+} from "../src/lib/api-design.js";
 
 test("buildRequestJsonSchema infers nested JSON request bodies", () => {
   const schema = buildRequestJsonSchema({
@@ -37,4 +42,27 @@ test("buildOpenApiOperation includes params headers and request body", () => {
   assert.equal(operation.summary, "Create user");
   assert.equal(operation.parameters.length, 2);
   assert.equal(operation.requestBody.content["application/json"].schema.properties.name.type, "string");
+});
+
+test("validateResponseBodyAgainstRequest passes matching JSON contracts", () => {
+  const result = validateResponseBodyAgainstRequest({
+    bodyType: "json",
+    body: "{\"id\":42,\"profile\":{\"name\":\"Ada\"}}"
+  }, "{\"id\":7,\"profile\":{\"name\":\"Grace\"}}");
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.errors, []);
+});
+
+test("validateResponseBodyAgainstRequest reports contract mismatches", () => {
+  const result = validateResponseBodyAgainstRequest({
+    bodyType: "json",
+    body: "{\"id\":42,\"active\":true}"
+  }, "{\"id\":\"42\"}");
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "$.active is required",
+    "$.id expected integer, got string"
+  ]);
 });

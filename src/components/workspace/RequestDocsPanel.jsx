@@ -1,7 +1,13 @@
-import { Braces, FileJson2, Sparkles } from "lucide-react";
+import { Braces, FileJson2, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button.jsx";
-import { buildMockFromRequest, buildOpenApiOperation, buildRequestJsonSchema, formatDesignBlock } from "@/lib/api-design.js";
+import {
+  buildMockFromRequest,
+  buildOpenApiOperation,
+  buildRequestJsonSchema,
+  formatDesignBlock,
+  validateResponseBodyAgainstRequest
+} from "@/lib/api-design.js";
 
 function appendBlock(current, block) {
   const prefix = String(current || "").trim();
@@ -12,6 +18,16 @@ export function RequestDocsPanel({ request, onChange }) {
   const schema = buildRequestJsonSchema(request);
   const mock = buildMockFromRequest(request);
   const operation = buildOpenApiOperation(request);
+  const responseBody = request?.lastResponse?.rawBody || request?.lastResponse?.body || "";
+  const canCheckContract = Boolean(schema && responseBody && !request?.lastResponse?.isBinary);
+  const appendContractCheck = () => {
+    const result = validateResponseBodyAgainstRequest(request, responseBody);
+    onChange("docs", appendBlock(request.docs, formatDesignBlock("Contract Check", {
+      ok: result.ok,
+      errors: result.errors,
+      schema: result.schema
+    })));
+  };
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] px-3 py-3">
@@ -49,6 +65,17 @@ export function RequestDocsPanel({ request, onChange }) {
           >
             <Sparkles className="h-3 w-3" />
             Mock
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 px-2.5 text-[11px]"
+            onClick={appendContractCheck}
+            disabled={!canCheckContract}
+          >
+            <ShieldCheck className="h-3 w-3" />
+            Contract
           </Button>
         </div>
       </div>
