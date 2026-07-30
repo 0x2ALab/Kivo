@@ -18,6 +18,7 @@ import { EnvHighlightInput } from "@/components/ui/EnvHighlightInput.jsx";
 import { LoadTestPane } from "@/components/workspace/LoadTestPane.jsx";
 import { RequestDocsPanel } from "@/components/workspace/RequestDocsPanel.jsx";
 import { RequestScriptsPanel } from "@/components/workspace/RequestScriptsPanel.jsx";
+import { RequestSettingsPanel } from "@/components/workspace/RequestSettingsPanel.jsx";
 import { RequestTabBar } from "@/components/workspace/RequestTabBar.jsx";
 
 const tabs = ["Params", "Body", "Auth", "Headers", "Scripts", "Docs", "Settings", "Load Test"];
@@ -525,109 +526,6 @@ function getPathLeafFolder(path) {
 
 function normalizePath(path) {
   return String(path || "").trim().replace(/\\/g, "/").toLowerCase();
-}
-
-function RequestSettingsPanel({ state, onChange }) {
-  const tagsText = Array.isArray(state.tags) ? state.tags.join(", ") : "";
-
-  function handleTagsChange(value) {
-    const tags = value
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
-    onChange("tags", tags);
-  }
-
-  return (
-    <div className="h-full min-h-0 overflow-hidden text-[12px] text-muted-foreground">
-      <div className="h-full thin-scrollbar overflow-auto px-3 py-3">
-        <div className="grid max-w-[720px] gap-4">
-          <p className="text-[13px] text-muted-foreground">Configure request settings for this item.</p>
-
-          <div className="grid gap-2">
-            <label className="text-[10px] uppercase tracking-[0.18em]">Tags</label>
-            <Input
-              value={tagsText}
-              onChange={(event) => handleTagsChange(event.target.value)}
-              placeholder="e.g., create, update"
-              className="h-10 border-border/40 bg-transparent"
-            />
-          </div>
-
-          <div className="grid gap-3 border border-border/30 bg-transparent p-3">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[12px] font-medium text-foreground">URL Encoding</div>
-                <p className="text-[12px] text-muted-foreground">Automatically encode query parameters in the URL.</p>
-              </div>
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 accent-primary"
-                checked={state.urlEncoding ?? true}
-                onChange={(event) => onChange("urlEncoding", event.target.checked)}
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[12px] font-medium text-foreground">Automatically Follow Redirects</div>
-                <p className="text-[12px] text-muted-foreground">Follow HTTP redirects automatically.</p>
-              </div>
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 accent-primary"
-                checked={state.followRedirects ?? true}
-                onChange={(event) => onChange("followRedirects", event.target.checked)}
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[12px] font-medium text-foreground">Use Cookie Jar</div>
-                <p className="text-[12px] text-muted-foreground">Automatically send stored cookies and capture Set-Cookie from responses.</p>
-              </div>
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 accent-primary"
-                checked={state.useCookieJar ?? true}
-                onChange={(event) => onChange("useCookieJar", event.target.checked)}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-[10px] uppercase tracking-[0.18em]">Max Redirects</label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={Number.isFinite(state.maxRedirects) ? String(state.maxRedirects) : "5"}
-                onChange={(event) => {
-                  const digitsOnly = event.target.value.replace(/[^0-9]/g, "");
-                  const value = Number.parseInt(digitsOnly, 10);
-                  onChange("maxRedirects", Number.isFinite(value) && value >= 0 ? value : 0);
-                }}
-                className="h-10 border-border/40 bg-transparent max-w-[180px]"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-[10px] uppercase tracking-[0.18em]">Timeout (ms)</label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={Number.isFinite(state.timeoutMs) ? String(state.timeoutMs) : "0"}
-                onChange={(event) => {
-                  const digitsOnly = event.target.value.replace(/[^0-9]/g, "");
-                  const value = Number.parseInt(digitsOnly, 10);
-                  onChange("timeoutMs", Number.isFinite(value) && value >= 0 ? value : 0);
-                }}
-                className="h-10 border-border/40 bg-transparent max-w-[180px]"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function buildGrpcErrorTrace(response, fallbackTitle = "gRPC request failed") {
