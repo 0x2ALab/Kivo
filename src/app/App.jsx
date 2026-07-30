@@ -100,7 +100,7 @@ export default function App() {
   const [githubStars, setGithubStars] = useState(null);
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/DevlogZz/Kivo")
+    fetch("https://api.github.com/repos/TrisH0x2A/Kivo")
       .then((res) => res.json())
       .then((data) => {
         if (data.stargazers_count !== undefined) {
@@ -550,7 +550,7 @@ export default function App() {
                   <button
                     type="button"
                     className="kivo-command flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-muted-foreground transition-all hover:text-foreground"
-                    onClick={() => openUrl("https://github.com/DevlogZz/Kivo")}
+                    onClick={() => openUrl("https://github.com/TrisH0x2A/Kivo")}
                   >
                     <Github className="h-[16px] w-[16px]" />
                     <span className="text-[11px] font-semibold">
@@ -620,7 +620,7 @@ export default function App() {
                   <button
                     type="button"
                     className="kivo-command flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-muted-foreground transition-all hover:text-foreground"
-                    onClick={() => openUrl("https://github.com/DevlogZz/Kivo")}
+                    onClick={() => openUrl("https://github.com/TrisH0x2A/Kivo")}
                   >
                     <Github className="h-[16px] w-[16px]" />
                     <span className="text-[11px] font-semibold">
