@@ -278,6 +278,9 @@ mod protocol_and_import_export_tests {
 
         let bruno = build_export_value("bruno", "Export Test", &requests, &options).unwrap();
         assert_eq!(bruno.get("opencollection").and_then(|v| v.as_str()), Some("1.0.0"));
+
+        let insomnia = build_export_value("insomnia", "Export Test", &requests, &options).unwrap();
+        assert_eq!(insomnia.get("__export_format").and_then(|v| v.as_i64()), Some(4));
     }
 
     #[test]
@@ -286,6 +289,7 @@ mod protocol_and_import_export_tests {
         assert_eq!(super::super::export::normalize_export_format("swagger"), "swagger2.0");
         assert_eq!(super::super::export::normalize_export_format("yaml"), "bruno");
         assert_eq!(super::super::export::normalize_export_format("postman"), "postman");
+        assert_eq!(super::super::export::normalize_export_format("insomnia-v4"), "insomnia");
     }
 
     #[test]
@@ -305,7 +309,7 @@ mod protocol_and_import_export_tests {
         let requests = vec![http_req, graphql_req];
         let options = ExportEnvOptions::default();
 
-        for format in ["postman", "openapi3.0", "swagger2.0", "bruno"] {
+        for format in ["postman", "openapi3.0", "swagger2.0", "bruno", "insomnia"] {
             let export = build_export_value(format, "Roundtrip Suite", &requests, &options).unwrap();
             let content = serialize_export_value(format, &export).unwrap();
             let imported = parse_collection_content(&content).unwrap();
@@ -325,6 +329,36 @@ mod protocol_and_import_export_tests {
             assert!(methods.contains(&"GET"), "expected GET method after {format} roundtrip");
             assert!(methods.contains(&"POST"), "expected POST method after {format} roundtrip");
         }
+    }
+
+    #[test]
+    fn parse_collection_content_detects_insomnia() {
+        let content = r#"
+        {
+          "__export_format": 4,
+          "resources": [
+            { "_id": "wrk_1", "_type": "workspace", "name": "Insomnia Suite" },
+            { "_id": "fld_1", "_type": "request_group", "parentId": "wrk_1", "name": "Users" },
+            {
+              "_id": "req_1",
+              "_type": "request",
+              "parentId": "fld_1",
+              "name": "Create user",
+              "method": "POST",
+              "url": "https://api.example.com/users?team=core",
+              "headers": [{ "name": "Content-Type", "value": "application/json" }],
+              "body": { "mimeType": "application/json", "text": "{\"name\":\"Ada\"}" }
+            }
+          ]
+        }
+        "#;
+
+        let parsed = parse_collection_content(content).unwrap();
+        assert_eq!(parsed.detected_format, "insomnia");
+        assert_eq!(parsed.collection.name, "Insomnia Suite");
+        assert_eq!(parsed.collection.folders, vec!["Users"]);
+        assert_eq!(parsed.collection.requests[0].folder_path, "Users");
+        assert_eq!(parsed.collection.requests[0].query_params[0].key, "team");
     }
 
     #[test]

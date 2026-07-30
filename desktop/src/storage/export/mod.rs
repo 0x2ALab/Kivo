@@ -969,6 +969,83 @@ pub fn requests_to_bruno_doc(requests: &[RequestRecord], name: &str) -> serde_js
     })
 }
 
+pub fn requests_to_insomnia_doc(requests: &[RequestRecord], name: &str) -> serde_json::Value {
+    let mut resources = vec![serde_json::json!({
+        "_id": "wrk_kivo",
+        "_type": "workspace",
+        "name": name,
+        "description": "Exported from Kivo",
+        "scope": "collection"
+    })];
+    let mut folder_ids = std::collections::BTreeMap::new();
+
+    for request in requests {
+        let mut parent_id = "wrk_kivo".to_string();
+        let mut path = String::new();
+        for segment in request.folder_path.split('/').map(str::trim).filter(|part| !part.is_empty()) {
+            path = if path.is_empty() { segment.to_string() } else { format!("{path}/{segment}") };
+            let id = format!("fld_{}", sanitize_export_id(&path));
+            if !folder_ids.contains_key(&path) {
+                resources.push(serde_json::json!({
+                    "_id": id,
+                    "_type": "request_group",
+                    "parentId": parent_id,
+                    "name": segment
+                }));
+                folder_ids.insert(path.clone(), id.clone());
+            }
+            parent_id = folder_ids.get(&path).cloned().unwrap_or(id);
+        }
+
+        let body_text = match &request.body {
+            RequestTextOrJson::Text(text) => text.clone(),
+            RequestTextOrJson::Json(value) => serde_json::to_string_pretty(value).unwrap_or_default(),
+        };
+        resources.push(serde_json::json!({
+            "_id": format!("req_{}", sanitize_export_id(&format!("{}-{}", request.folder_path, request.name))),
+            "_type": "request",
+            "parentId": parent_id,
+            "name": request.name,
+            "method": request.method,
+            "url": request.url,
+            "headers": request.headers.iter().filter(|row| row.enabled && !row.key.trim().is_empty()).map(|row| {
+                serde_json::json!({ "name": row.key, "value": row.value })
+            }).collect::<Vec<_>>(),
+            "body": {
+                "mimeType": content_type_for_body_type(&request.body_type),
+                "text": body_text
+            }
+        }));
+    }
+
+    serde_json::json!({
+        "_type": "export",
+        "__export_format": 4,
+        "__export_source": "kivo",
+        "resources": resources
+    })
+}
+
+fn sanitize_export_id(value: &str) -> String {
+    value
+        .chars()
+        .map(|ch| if ch.is_ascii_alphanumeric() { ch.to_ascii_lowercase() } else { '_' })
+        .collect::<String>()
+        .trim_matches('_')
+        .to_string()
+}
+
+fn content_type_for_body_type(body_type: &str) -> &'static str {
+    match body_type {
+        "xml" => "application/xml",
+        "yaml" => "application/yaml",
+        "text" => "text/plain",
+        "graphql" => "application/json",
+        "soap" => "application/soap+xml",
+        _ => "application/json",
+    }
+}
+
 pub fn serialize_export_value(format: &str, value: &serde_json::Value) -> Result<String, String> {
     if format == "bruno" || format.ends_with("yaml") || format.ends_with("yml") {
         return serde_yaml::to_string(value).map_err(|e| format!("Failed to serialize YAML: {e}"));
@@ -981,6 +1058,7 @@ pub fn normalize_export_format(format: &str) -> String {
         "openapi3" | "openapi3.0" | "openapi" => "openapi3.0".to_string(),
         "swagger2" | "swagger2.0" | "swagger" => "swagger2.0".to_string(),
         "postman" => "postman".to_string(),
+        "insomnia" | "insomnia4" | "insomnia-v4" => "insomnia".to_string(),
         "kivo" | "kivo-json" | "kivo.json" => "kivo".to_string(),
         "bruno" | "bruno-yml" | "bruno.yml" | "yml" | "yaml" => "bruno".to_string(),
         other => other.to_string(),
@@ -1024,9 +1102,10 @@ pub fn build_export_value(
         })),
         "openapi3.0" => Ok(requests_to_openapi_doc(&export_requests, name, "1.0.0", "3.0.0")),
         "swagger2.0" => Ok(requests_to_openapi_doc(&export_requests, name, "1.0.0", "2.0")),
+        "insomnia" => Ok(requests_to_insomnia_doc(&export_requests, name)),
         "bruno" => Ok(requests_to_bruno_doc(&export_requests, name)),
         _ => Err(
-            "Unsupported export format. Use kivo, postman, openapi3.0, swagger2.0, or bruno.".to_string(),
+            "Unsupported export format. Use kivo, postman, openapi3.0, swagger2.0, insomnia, or bruno.".to_string(),
         ),
     }
 }

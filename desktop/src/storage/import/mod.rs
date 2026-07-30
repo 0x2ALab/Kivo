@@ -87,7 +87,7 @@ fn parse_headers_array(value: Option<&Value>) -> Vec<KeyValueRow> {
     let mut headers = vec![];
     if let Some(items) = value.and_then(|v| v.as_array()) {
         for item in items {
-            let key = as_str(item.get("key"));
+            let key = as_str(item.get("key")).if_empty_then(|| as_str(item.get("name")));
             if key.trim().is_empty() {
                 continue;
             }
@@ -479,6 +479,19 @@ pub fn detect_format(value: &Value) -> String {
     {
         return "postman".to_string();
     }
+    if value.get("__export_format").is_some()
+        || value
+            .get("resources")
+            .and_then(|v| v.as_array())
+            .map_or(false, |items| {
+                items.iter().any(|item| {
+                    item.get("_type").and_then(|v| v.as_str()) == Some("request")
+                        || item.get("_type").and_then(|v| v.as_str()) == Some("request_group")
+                })
+            })
+    {
+        return "insomnia".to_string();
+    }
     if value.get("requests").is_some()
         || value.get("folders").is_some()
         || value.get("bruno").is_some()
@@ -757,6 +770,100 @@ fn import_bruno(value: &Value) -> CollectionRecord {
     }
 }
 
+fn import_insomnia(value: &Value) -> CollectionRecord {
+    let resources = value
+        .get("resources")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+    let name = resources
+        .iter()
+        .find(|item| item.get("_type").and_then(|v| v.as_str()) == Some("workspace"))
+        .and_then(|item| item.get("name"))
+        .and_then(|v| v.as_str())
+        .unwrap_or("Insomnia Import")
+        .to_string();
+
+    let mut group_names = std::collections::HashMap::new();
+    let mut group_parents = std::collections::HashMap::new();
+    for item in &resources {
+        if item.get("_type").and_then(|v| v.as_str()) != Some("request_group") {
+            continue;
+        }
+        let id = as_str(item.get("_id"));
+        if id.trim().is_empty() {
+            continue;
+        }
+        group_names.insert(id.clone(), as_str(item.get("name")));
+        group_parents.insert(id, as_str(item.get("parentId")));
+    }
+
+    fn group_path(
+        id: &str,
+        names: &std::collections::HashMap<String, String>,
+        parents: &std::collections::HashMap<String, String>,
+    ) -> String {
+        let mut parts = vec![];
+        let mut current = id.to_string();
+        let mut seen = BTreeSet::new();
+        while !current.trim().is_empty() && seen.insert(current.clone()) {
+            if let Some(name) = names.get(&current) {
+                if !name.trim().is_empty() {
+                    parts.push(name.clone());
+                }
+            }
+            current = parents.get(&current).cloned().unwrap_or_default();
+        }
+        parts.reverse();
+        parts.join("/")
+    }
+
+    let mut folders = BTreeSet::new();
+    let mut requests = vec![];
+    for item in &resources {
+        if item.get("_type").and_then(|v| v.as_str()) != Some("request") {
+            continue;
+        }
+        let method = as_str(item.get("method")).to_uppercase();
+        let raw_url = parse_url_value(item.get("url"));
+        let (url, query_params) = split_url_query(&raw_url);
+        let mut request = empty_request(
+            as_str(item.get("name")).if_empty_then(|| {
+                format!(
+                    "{} {}",
+                    if method.is_empty() { "GET" } else { &method },
+                    if url.is_empty() { "/" } else { &url }
+                )
+            }),
+            if method.is_empty() { "GET".to_string() } else { method },
+            url,
+        );
+        request.query_params = query_params;
+        request.headers = parse_headers_any(item.get("headers"));
+        request.folder_path = group_path(&as_str(item.get("parentId")), &group_names, &group_parents);
+        if !request.folder_path.trim().is_empty() {
+            folders.insert(request.folder_path.clone());
+        }
+
+        if let Some(body_text) = item
+            .get("body")
+            .and_then(|v| v.get("text"))
+            .and_then(|v| v.as_str())
+        {
+            request.body = RequestTextOrJson::Text(body_text.to_string());
+            request.body_type = detect_raw_body_type(item.get("body").unwrap_or(&Value::Null), &request.headers);
+        }
+        requests.push(request);
+    }
+
+    CollectionRecord {
+        name,
+        folders: folders.into_iter().collect(),
+        folder_settings: vec![],
+        requests,
+    }
+}
+
 trait IfEmptyThen {
     fn if_empty_then<F: FnOnce() -> String>(self, fallback: F) -> String;
 }
@@ -795,6 +902,7 @@ pub fn import_collection_value(value: &Value) -> Result<ImportedCollectionResult
         }
         "openapi3" => import_openapi_like(value, "openapi3"),
         "swagger2" => import_openapi_like(value, "swagger2"),
+        "insomnia" => import_insomnia(value),
         "bruno" => import_bruno(value),
         _ => {
             if let Ok(collection) = import_kivo(value) {
@@ -804,7 +912,7 @@ pub fn import_collection_value(value: &Value) -> Result<ImportedCollectionResult
                 });
             }
             return Err(
-                "Unsupported collection format. Use Kivo JSON, Postman, OpenAPI 3, Swagger 2, or Bruno.".to_string(),
+                "Unsupported collection format. Use Kivo JSON, Postman, Insomnia, OpenAPI 3, Swagger 2, or Bruno.".to_string(),
             )
         }
     };
