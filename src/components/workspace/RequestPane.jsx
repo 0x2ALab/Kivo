@@ -4,11 +4,12 @@ import { Braces, Eye, EyeOff, FileCode2, FilePlus2, FileText, Folder, FolderPlus
 import { open } from "@tauri-apps/plugin-dialog";
 
 import { CodeEditor } from "@/components/workspace/CodeEditor.jsx";
+import { GraphQLEditor } from "@/components/workspace/GraphQLEditor.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Card } from "@/components/ui/card.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { OAuth2Panel } from "@/components/workspace/OAuth2Panel.jsx";
-import { formatGraphqlText, formatJsonText } from "@/lib/formatters.js";
+import { formatJsonText } from "@/lib/formatters.js";
 import { buildUrlWithParams, getMethodTone, requestBodyModes } from "@/lib/http-ui.js";
 import { listGrpcProtoFilesInDirectory, parseGrpcProtoFile, reflectGrpcServer } from "@/lib/http-client.js";
 import { isDynamicTemplateVariable } from "@/lib/template-variables.js";
@@ -347,59 +348,6 @@ function WebSocketHeadersPanel({ headers, onHeadersChange }) {
             addLabel="Add"
           />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function GraphQLEditor({ query, variables, onQueryChange, onVariablesChange, disabled }) {
-  function handleFormatQuery() {
-    onQueryChange(formatGraphqlText(query));
-  }
-
-  function handleFormatVariables() {
-    try {
-      onVariablesChange(formatJsonText(variables || "{}"));
-    } catch {
-    }
-  }
-
-  return (
-    <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] overflow-hidden bg-transparent">
-      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)]">
-        <div className="flex items-center justify-between border-b border-border/20 px-3 py-2 text-[11px] text-muted-foreground lg:text-[12px]">
-          <span className="font-medium text-foreground">Query</span>
-          <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-[11px]" onClick={handleFormatQuery} disabled={disabled}>
-            <Wand2 className="h-3 w-3" />
-            Format Query
-          </Button>
-        </div>
-        <CodeEditor
-          value={query}
-          onChange={onQueryChange}
-          placeholder={"query GetUsers {\n  users {\n    id\n    name\n  }\n}"}
-          language="graphql"
-          disabled={disabled}
-        />
-      </div>
-
-      <div className="h-px bg-border/25" />
-
-      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)]">
-        <div className="flex items-center justify-between border-b border-border/20 px-3 py-2 text-[11px] text-muted-foreground lg:text-[12px]">
-          <span className="font-medium text-foreground">Variables</span>
-          <Button type="button" variant="outline" size="sm" className="h-7 px-2.5 text-[11px]" onClick={handleFormatVariables} disabled={disabled}>
-            <Wand2 className="h-3 w-3" />
-            Format Variables
-          </Button>
-        </div>
-        <CodeEditor
-          value={variables}
-          onChange={onVariablesChange}
-          placeholder={"{\n  \"id\": 1\n}"}
-          language="json"
-          disabled={disabled}
-        />
       </div>
     </div>
   );
