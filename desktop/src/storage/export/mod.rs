@@ -155,6 +155,8 @@ pub fn sanitize_request_for_export(
     sanitized.auth.token = sanitize_export_text(&sanitized.auth.token, options);
     sanitized.auth.username = sanitize_export_text(&sanitized.auth.username, options);
     sanitized.auth.password = sanitize_export_text(&sanitized.auth.password, options);
+    sanitized.auth.custom_scheme = sanitize_export_text(&sanitized.auth.custom_scheme, options);
+    sanitized.auth.custom_value = sanitize_export_text(&sanitized.auth.custom_value, options);
     sanitized.auth.api_key_name = sanitize_export_text(&sanitized.auth.api_key_name, options);
     sanitized.auth.api_key_value = sanitize_export_text(&sanitized.auth.api_key_value, options);
     sanitized.auth.api_key_in = sanitize_export_text(&sanitized.auth.api_key_in, options);
@@ -314,6 +316,8 @@ fn auth_to_compact(auth: &crate::storage::models::AuthRecord) -> Option<Value> {
     insert_non_empty_string(&mut map, "token", &auth.token);
     insert_non_empty_string(&mut map, "username", &auth.username);
     insert_non_empty_string(&mut map, "password", &auth.password);
+    insert_non_empty_string(&mut map, "customScheme", &auth.custom_scheme);
+    insert_non_empty_string(&mut map, "customValue", &auth.custom_value);
     insert_non_empty_string(&mut map, "apiKeyName", &auth.api_key_name);
     insert_non_empty_string(&mut map, "apiKeyValue", &auth.api_key_value);
     if !auth.api_key_in.trim().is_empty() && auth.api_key_in != "header" {
@@ -632,6 +636,8 @@ pub fn prepare_collection_for_kivo_export(
             next.default_auth.token = sanitize_export_text(&next.default_auth.token, options);
             next.default_auth.username = sanitize_export_text(&next.default_auth.username, options);
             next.default_auth.password = sanitize_export_text(&next.default_auth.password, options);
+            next.default_auth.custom_scheme = sanitize_export_text(&next.default_auth.custom_scheme, options);
+            next.default_auth.custom_value = sanitize_export_text(&next.default_auth.custom_value, options);
             next.default_auth.api_key_name = sanitize_export_text(&next.default_auth.api_key_name, options);
             next.default_auth.api_key_value = sanitize_export_text(&next.default_auth.api_key_value, options);
             next.default_auth.api_key_in = sanitize_export_text(&next.default_auth.api_key_in, options);

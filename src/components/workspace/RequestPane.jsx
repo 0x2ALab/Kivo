@@ -52,6 +52,7 @@ const authModes = [
   { value: "bearer", label: "Bearer Token" },
   { value: "jwt", label: "JWT Bearer" },
   { value: "digest", label: "Digest Auth" },
+  { value: "custom", label: "Custom Auth" },
   { value: "apikey", label: "API Key" },
   { value: "oauth2", label: "OAuth 2.0" },
   { value: "inherit", label: "Inherit from Collection" },
@@ -523,6 +524,32 @@ function AuthPanel({ state, onAuthChange, envVars, response, workspaceName, coll
           </div>
           <p className="text-[11px] text-muted-foreground/70">
             Generates a preemptive Digest header when realm and nonce are known, then retries once from a SHA-256 server challenge when needed.
+          </p>
+        </div>
+      )}
+
+      {auth.type === "custom" && (
+        <div className="grid max-w-[520px] gap-4 px-3" style={{ animation: "fadeIn 0.2s ease-out" }}>
+          <div className="grid gap-2">
+            <label className="text-[10px] uppercase tracking-[0.18em]">Scheme</label>
+            <EnvHighlightInput
+              value={auth.customScheme ?? ""}
+              onValueChange={(val) => onAuthChange({ ...auth, customScheme: val })}
+              placeholder="e.g. Token, SharedKey, ApiToken"
+              envVars={envVars}
+            />
+          </div>
+          <div className="grid gap-2">
+            <label className="text-[10px] uppercase tracking-[0.18em]">Credential</label>
+            <EnvHighlightInput
+              value={auth.customValue ?? ""}
+              onValueChange={(val) => onAuthChange({ ...auth, customValue: val })}
+              placeholder="Credential value"
+              envVars={envVars}
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground/70">
+            Sends <code className="rounded-sm border border-border/30 px-1 py-0.5 text-[10px] text-foreground">Authorization: &lt;scheme&gt; &lt;credential&gt;</code>. Leave scheme empty to send the credential as-is.
           </p>
         </div>
       )}

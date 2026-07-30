@@ -42,6 +42,8 @@ export function createDefaultAuthState() {
     digestNonce: "",
     digestQop: "auth",
     digestAlgorithm: "SHA-256",
+    customScheme: "",
+    customValue: "",
     apiKeyName: "",
     apiKeyValue: "",
     apiKeyIn: "header",

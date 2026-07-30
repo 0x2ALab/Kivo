@@ -568,6 +568,10 @@ pub struct AuthRecord {
         skip_serializing_if = "String::is_empty"
     )]
     pub digest_algorithm: String,
+    #[serde(default, rename = "customScheme", skip_serializing_if = "String::is_empty")]
+    pub custom_scheme: String,
+    #[serde(default, rename = "customValue", skip_serializing_if = "String::is_empty")]
+    pub custom_value: String,
     #[serde(
         default,
         rename = "apiKeyName",
@@ -717,6 +721,8 @@ pub fn default_auth_record() -> AuthRecord {
         digest_nonce: String::new(),
         digest_qop: "auth".to_string(),
         digest_algorithm: "SHA-256".to_string(),
+        custom_scheme: String::new(),
+        custom_value: String::new(),
         api_key_name: String::new(),
         api_key_value: String::new(),
         api_key_in: "header".to_string(),
@@ -735,6 +741,8 @@ pub fn default_inherit_auth_record() -> AuthRecord {
         digest_nonce: String::new(),
         digest_qop: "auth".to_string(),
         digest_algorithm: "SHA-256".to_string(),
+        custom_scheme: String::new(),
+        custom_value: String::new(),
         api_key_name: String::new(),
         api_key_value: String::new(),
         api_key_in: "header".to_string(),

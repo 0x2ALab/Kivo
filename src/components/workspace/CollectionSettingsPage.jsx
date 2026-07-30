@@ -215,6 +215,7 @@ const AUTH_MODES = [
   { value: "bearer", label: "Bearer Token" },
   { value: "jwt", label: "JWT" },
   { value: "digest", label: "Digest" },
+  { value: "custom", label: "Custom" },
   { value: "apikey", label: "API Key" },
   { value: "oauth2", label: "OAuth 2.0" },
 ];
@@ -357,6 +358,32 @@ function AuthTab({ workspace, collection, config, updateConfig, onSave, onReset,
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">Generates a SHA-256 preemptive Digest header when realm and nonce are known.</p>
+          </div>
+        )}
+
+        {auth.type === "custom" && (
+          <div className="grid gap-4 text-left w-full" style={{ animation: "fadeIn 0.2s ease-out" }}>
+            <div className="grid gap-2">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Scheme</label>
+              <EnvHighlightInput
+                value={auth.customScheme ?? ""}
+                onValueChange={(val) => updateConfig({ defaultAuth: { ...auth, customScheme: val } })}
+                placeholder="e.g. Token, SharedKey, ApiToken"
+                inputClassName="h-10 border-border/40 bg-transparent font-mono text-[12px] focus-visible:border-primary/50 focus-visible:ring-1 focus-visible:ring-primary/20"
+                envVars={envVars}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Credential</label>
+              <EnvHighlightInput
+                value={auth.customValue ?? ""}
+                onValueChange={(val) => updateConfig({ defaultAuth: { ...auth, customValue: val } })}
+                placeholder="Credential value"
+                inputClassName="h-10 border-border/40 bg-transparent font-mono text-[12px] focus-visible:border-primary/50 focus-visible:ring-1 focus-visible:ring-primary/20"
+                envVars={envVars}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Sends a custom Authorization header. Leave scheme empty to send the credential as-is.</p>
           </div>
         )}
 

@@ -176,6 +176,12 @@ export function serializeHeaders(rows = [], auth = { type: "none", token: "" }, 
     headers.Authorization = `Basic ${encoded}`;
   }
 
+  if (auth?.type === "custom" && resolveValue(auth.customValue).trim()) {
+    const scheme = resolveValue(auth.customScheme || "").trim();
+    const value = resolveValue(auth.customValue).trim();
+    headers.Authorization = scheme ? `${scheme} ${value}` : value;
+  }
+
   if (auth?.type === "apikey" && auth.apiKeyIn !== "query" && resolveValue(auth.apiKeyName).trim()) {
     headers[resolveValue(auth.apiKeyName).trim()] = resolveValue(auth.apiKeyValue);
   }
@@ -363,6 +369,8 @@ export function buildRequestPayload(request, workspaceName, collectionName) {
       digestNonce: auth.digestNonce ?? "",
       digestQop: auth.digestQop ?? "auth",
       digestAlgorithm: auth.digestAlgorithm ?? "SHA-256",
+      customScheme: auth.customScheme ?? "",
+      customValue: auth.customValue ?? "",
       oauth2: auth.type === "oauth2" ? auth.oauth2 ?? null : null,
     },
     proxyMode: request?.proxyMode ?? "inherit",

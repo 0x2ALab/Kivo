@@ -9,6 +9,7 @@ const AUTH_SENSITIVE_KEYS = new Set([
   "jwtToken",
   "proxyPassword",
   "apiKeyValue",
+  "customValue",
   "clientSecret",
   "accessToken",
   "refreshToken",
@@ -422,6 +423,14 @@ function sanitizeAuthForSave(auth) {
       digestNonce: String(auth?.digestNonce ?? ""),
       digestQop: String(auth?.digestQop ?? "auth"),
       digestAlgorithm: String(auth?.digestAlgorithm ?? "SHA-256")
+    };
+  }
+
+  if (authType === "custom") {
+    return {
+      type: "custom",
+      customScheme: String(auth?.customScheme ?? ""),
+      customValue: String(auth?.customValue ?? "")
     };
   }
 
