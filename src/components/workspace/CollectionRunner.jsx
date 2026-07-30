@@ -300,8 +300,8 @@ export function CollectionRunner({ workspace, collection }) {
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
-      <Card className="overflow-hidden border border-border/40 bg-[hsl(var(--sidebar))]/95 shadow-[0_18px_38px_hsl(0_0%_0%/0.16)]">
-        <div className="border-b border-border/20 bg-background/22 px-4 py-3">
+      <Card className="kivo-soft-panel overflow-hidden">
+        <div className="kivo-quiet-divider border-b bg-background/12 px-4 py-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-foreground">
@@ -316,7 +316,7 @@ export function CollectionRunner({ workspace, collection }) {
             <select
               value={folderFilter}
               onChange={(event) => setFolderFilter(event.target.value)}
-              className="h-9 border border-border/45 bg-background/45 px-3 text-[12px] text-foreground outline-none transition-colors hover:border-primary/35 focus:border-primary/55"
+              className="kivo-field h-9 px-3 text-[12px] text-foreground outline-none transition-colors hover:border-primary/35"
             >
               <option value="">All folders</option>
               {folders.map((folder) => (
@@ -328,7 +328,7 @@ export function CollectionRunner({ workspace, collection }) {
               inputMode="numeric"
               value={String(retryCount)}
               onChange={(event) => setRetryCount(Math.max(0, Number.parseInt(event.target.value.replace(/\D/g, ""), 10) || 0))}
-              className="h-9 w-24 border-border/45 bg-background/45 text-[12px]"
+              className="kivo-field h-9 w-24 text-[12px]"
               placeholder="Retries"
             />
             <Input
@@ -336,11 +336,11 @@ export function CollectionRunner({ workspace, collection }) {
               inputMode="numeric"
               value={String(delayMs)}
               onChange={(event) => setDelayMs(normalizeRunnerDelayMs(event.target.value))}
-              className="h-9 w-28 border-border/45 bg-background/45 text-[12px]"
+              className="kivo-field h-9 w-28 text-[12px]"
               placeholder="Delay ms"
               title="Delay between runner requests in milliseconds"
             />
-            <label className="flex h-9 items-center gap-2 border border-border/45 bg-background/35 px-3 text-[12px] text-foreground transition-colors hover:border-primary/35">
+            <label className="kivo-field flex h-9 items-center gap-2 px-3 text-[12px] text-foreground transition-colors hover:border-primary/35">
               <input
                 type="checkbox"
                 className="h-3.5 w-3.5 accent-primary"
@@ -362,16 +362,16 @@ export function CollectionRunner({ workspace, collection }) {
           </div>
         </div>
         </div>
-        <div className="grid grid-cols-2 border-b border-border/20 bg-background/12 text-[11px] sm:grid-cols-5">
-          <div className="border-r border-border/15 px-4 py-2.5 text-muted-foreground">Total <span className="ml-1 font-semibold text-foreground">{summary.total}</span></div>
-          <div className="border-r border-border/15 px-4 py-2.5 text-muted-foreground">Done <span className="ml-1 font-semibold text-foreground">{summary.done}</span></div>
-          <div className="border-r border-border/15 px-4 py-2.5 text-muted-foreground">Passed <span className="ml-1 font-semibold text-emerald-500">{summary.passed}</span></div>
-          <div className="border-r border-border/15 px-4 py-2.5 text-muted-foreground">Failed <span className="ml-1 font-semibold text-red-500">{summary.failed}</span></div>
+        <div className="kivo-quiet-divider grid grid-cols-2 border-b bg-background/8 text-[11px] sm:grid-cols-5">
+          <div className="kivo-quiet-divider border-r px-4 py-2.5 text-muted-foreground">Total <span className="ml-1 font-semibold text-foreground">{summary.total}</span></div>
+          <div className="kivo-quiet-divider border-r px-4 py-2.5 text-muted-foreground">Done <span className="ml-1 font-semibold text-foreground">{summary.done}</span></div>
+          <div className="kivo-quiet-divider border-r px-4 py-2.5 text-muted-foreground">Passed <span className="ml-1 font-semibold text-emerald-500">{summary.passed}</span></div>
+          <div className="kivo-quiet-divider border-r px-4 py-2.5 text-muted-foreground">Failed <span className="ml-1 font-semibold text-red-500">{summary.failed}</span></div>
           <div className="px-4 py-2.5 text-muted-foreground">Tests <span className="ml-1 font-semibold text-foreground">{summary.tests}</span></div>
         </div>
         <div className="grid gap-3 p-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="min-h-[132px] overflow-hidden border border-border/35 bg-background/24">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/18 bg-background/28 px-3 py-2">
+          <div className="kivo-field min-h-[132px] overflow-hidden">
+            <div className="kivo-quiet-divider flex flex-wrap items-center justify-between gap-2 border-b bg-background/18 px-3 py-2">
               <div className="flex min-w-0 items-center gap-2">
                 <DataMetaIcon className={cn("h-3.5 w-3.5 shrink-0", dataMeta.tone)} />
                 <div className="min-w-0">
@@ -401,7 +401,7 @@ export function CollectionRunner({ workspace, collection }) {
               className="thin-scrollbar min-h-[94px] w-full resize-none border-0 bg-transparent px-3 py-2.5 font-mono text-[11px] leading-5 text-foreground outline-none placeholder:text-muted-foreground/70"
             />
           </div>
-          <div className="grid content-start gap-2 border border-border/25 bg-background/18 p-3">
+          <div className="kivo-field grid content-start gap-2 p-3">
             <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
               <DataMetaIcon className={cn("h-3.5 w-3.5", dataMeta.tone)} />
               {dataRows.length ? `${dataRows.length} data row(s) loaded` : "No data rows loaded"}
@@ -416,7 +416,7 @@ export function CollectionRunner({ workspace, collection }) {
                 Report
               </Button>
             </div>
-            <div className="flex min-w-0 items-start gap-2 border-t border-border/15 pt-2 text-[10px] text-muted-foreground">
+            <div className="kivo-quiet-divider flex min-w-0 items-start gap-2 border-t pt-2 text-[10px] text-muted-foreground">
               <TimerReset className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/80" />
               <span className="min-w-0 truncate">Recent: {runHistory.length ? runHistory.map((run) => new Date(run.ranAt).toLocaleTimeString()).join(", ") : "none"}</span>
             </div>
@@ -424,8 +424,8 @@ export function CollectionRunner({ workspace, collection }) {
         </div>
       </Card>
 
-      <Card className="min-h-0 overflow-hidden border border-border/40 bg-[hsl(var(--sidebar))]/95 shadow-[0_18px_38px_hsl(0_0%_0%/0.14)]">
-        <div className="grid grid-cols-[52px_92px_minmax(0,1.4fr)_86px_92px_92px_minmax(0,1fr)] border-b border-border/25 bg-background/22 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <Card className="kivo-soft-panel min-h-0 overflow-hidden">
+        <div className="kivo-quiet-divider grid grid-cols-[52px_92px_minmax(0,1.4fr)_86px_92px_92px_minmax(0,1fr)] border-b bg-background/12 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           <div>#</div>
           <div>Method</div>
           <div>Request</div>
@@ -446,7 +446,7 @@ export function CollectionRunner({ workspace, collection }) {
             tests: [],
             error: "",
           }))).map((item, index) => (
-            <div key={item.id} className="grid grid-cols-[52px_92px_minmax(0,1.4fr)_86px_92px_92px_minmax(0,1fr)] items-center border-b border-border/12 px-3 py-2 text-[12px] transition-colors hover:bg-primary/[0.045]">
+            <div key={item.id} className="kivo-row-hover kivo-quiet-divider grid grid-cols-[52px_92px_minmax(0,1.4fr)_86px_92px_92px_minmax(0,1fr)] items-center border-b px-3 py-2 text-[12px]">
               <div className="text-muted-foreground">{index + 1}</div>
               <div className="font-semibold text-foreground">{item.method || "GET"}</div>
               <div className="min-w-0">
