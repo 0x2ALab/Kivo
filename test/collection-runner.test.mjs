@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { applyRunnerDataRow, getRunnableRequests, normalizeRunnerFolderPath, parseCsvTable, parseRunnerDataRows } from "../src/lib/collection-runner.js";
+import { applyRunnerDataRow, buildRunReport, getRunnableRequests, normalizeRunnerDelayMs, normalizeRunnerFolderPath, parseCsvTable, parseRunnerDataRows } from "../src/lib/collection-runner.js";
 
 test("parseCsvTable supports quoted commas and escaped quotes", () => {
   assert.deepEqual(parseCsvTable('name,query\n"Ada, Lovelace","say ""hi"""'), [
@@ -48,4 +48,35 @@ test("getRunnableRequests normalizes folder filters", () => {
     getRunnableRequests(collection, "users/active").map(({ request }) => request.name),
     ["List", "Query"]
   );
+});
+
+test("normalizeRunnerDelayMs clamps delay values", () => {
+  assert.equal(normalizeRunnerDelayMs("250ms"), 250);
+  assert.equal(normalizeRunnerDelayMs("-1"), 0);
+  assert.equal(normalizeRunnerDelayMs("999999"), 60000);
+  assert.equal(normalizeRunnerDelayMs(""), 0);
+});
+
+test("buildRunReport includes assertion and failure summary", () => {
+  const report = buildRunReport({
+    collectionName: "API",
+    folderFilter: "",
+    dataRows: [],
+    summary: { total: 1, done: 1, passed: 0, failed: 1, tests: 2 },
+    results: [{
+      name: "Create",
+      method: "POST",
+      url: "https://api.example.com/users",
+      status: "failed",
+      statusCode: 500,
+      duration: "20 ms",
+      attempts: 2,
+      tests: [{ name: "status", ok: false }, { name: "shape", ok: true }],
+      error: "status failed",
+    }],
+  });
+
+  assert.deepEqual(report.summary.assertions, { total: 2, passed: 1, failed: 1 });
+  assert.equal(report.summary.failureCount, 1);
+  assert.equal(report.failures[0].name, "Create");
 });

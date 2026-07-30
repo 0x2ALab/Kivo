@@ -9,7 +9,7 @@ import { formatSavedAt } from "@/lib/workspace-store.js";
 import { cancelHttpRequest, sendHttpRequest } from "@/lib/http-client.js";
 import { formatResponseBody, isJsonText } from "@/lib/formatters.js";
 import { runRequestScript } from "@/lib/request-scripts.js";
-import { applyRunnerDataRow, buildRunReport, getRunnableRequests, normalizeRunnerFolderPath, parseRunnerDataRows } from "@/lib/collection-runner.js";
+import { applyRunnerDataRow, buildRunReport, getRunnableRequests, normalizeRunnerDelayMs, normalizeRunnerFolderPath, parseRunnerDataRows } from "@/lib/collection-runner.js";
 import { cn } from "@/lib/utils.js";
 
 function buildRunnerResponse(result, request) {
@@ -62,6 +62,7 @@ function getDataSourceMeta(source, rows) {
 export function CollectionRunner({ workspace, collection }) {
   const [folderFilter, setFolderFilter] = useState("");
   const [retryCount, setRetryCount] = useState(0);
+  const [delayMs, setDelayMs] = useState(0);
   const [stopOnFailure, setStopOnFailure] = useState(false);
   const [dataSource, setDataSource] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -238,7 +239,8 @@ export function CollectionRunner({ workspace, collection }) {
     setResults(queued);
 
     try {
-      for (const item of runItems) {
+      for (let itemIndex = 0; itemIndex < runItems.length; itemIndex += 1) {
+        const item = runItems[itemIndex];
         if (stopRequestedRef.current) {
           setResults((current) => current.map((result) => result.status === "queued" ? { ...result, status: "skipped" } : result));
           break;
@@ -248,15 +250,19 @@ export function CollectionRunner({ workspace, collection }) {
           setResults((current) => current.map((result) => result.status === "queued" ? { ...result, status: "skipped" } : result));
           break;
         }
+        if (delayMs > 0 && itemIndex < runItems.length - 1 && !stopRequestedRef.current) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
       }
     } finally {
       setIsRunning(false);
       setRunHistory((current) => [{
         id: `run-${Date.now()}`,
         ranAt: new Date().toISOString(),
-        collectionName: collection?.name || "",
-        folderFilter,
-        dataRows: dataRows.length,
+                collectionName: collection?.name || "",
+                folderFilter,
+                dataRows: dataRows.length,
+        delayMs,
       }, ...current].slice(0, 8));
     }
   }
@@ -324,6 +330,15 @@ export function CollectionRunner({ workspace, collection }) {
               onChange={(event) => setRetryCount(Math.max(0, Number.parseInt(event.target.value.replace(/\D/g, ""), 10) || 0))}
               className="h-9 w-24 border-border/45 bg-background/45 text-[12px]"
               placeholder="Retries"
+            />
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={String(delayMs)}
+              onChange={(event) => setDelayMs(normalizeRunnerDelayMs(event.target.value))}
+              className="h-9 w-28 border-border/45 bg-background/45 text-[12px]"
+              placeholder="Delay ms"
+              title="Delay between runner requests in milliseconds"
             />
             <label className="flex h-9 items-center gap-2 border border-border/45 bg-background/35 px-3 text-[12px] text-foreground transition-colors hover:border-primary/35">
               <input

@@ -111,12 +111,35 @@ export function applyRunnerDataRow(request, row) {
 }
 
 export function buildRunReport({ collectionName, folderFilter, dataRows, summary, results }) {
+  const assertionTotals = results.reduce((totals, item) => {
+    const tests = Array.isArray(item.tests) ? item.tests : [];
+    totals.total += tests.length;
+    totals.passed += tests.filter((test) => test.ok).length;
+    totals.failed += tests.filter((test) => !test.ok).length;
+    return totals;
+  }, { total: 0, passed: 0, failed: 0 });
+  const failedResults = results
+    .filter((item) => item.status === "failed" || Number(item.statusCode || 0) >= 400 || String(item.error || "").trim())
+    .map((item) => ({
+      name: item.name,
+      method: item.method,
+      url: item.url,
+      dataRow: item.dataRowName || "",
+      statusCode: item.statusCode,
+      error: item.error || "",
+    }));
+
   return {
     collection: collectionName || "",
     folder: folderFilter || "All folders",
     dataRows: dataRows.length,
-    summary,
+    summary: {
+      ...summary,
+      assertions: assertionTotals,
+      failureCount: failedResults.length,
+    },
     generatedAt: new Date().toISOString(),
+    failures: failedResults,
     results: results.map((item) => ({
       name: item.name,
       method: item.method,
@@ -130,4 +153,12 @@ export function buildRunReport({ collectionName, folderFilter, dataRows, summary
       error: item.error || "",
     })),
   };
+}
+
+export function normalizeRunnerDelayMs(value) {
+  const raw = String(value ?? "").trim();
+  if (raw.startsWith("-")) return 0;
+  const number = Number.parseInt(raw.replace(/[^0-9]/g, ""), 10);
+  if (!Number.isFinite(number) || number < 0) return 0;
+  return Math.min(number, 60_000);
 }
