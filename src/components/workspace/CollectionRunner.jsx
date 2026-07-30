@@ -12,6 +12,8 @@ import { runRequestScript } from "@/lib/request-scripts.js";
 import { applyRunnerDataRow, buildRunReport, getRunnableRequests, normalizeRunnerDelayMs, normalizeRunnerFolderPath, parseRunnerDataRows } from "@/lib/collection-runner.js";
 import { cn } from "@/lib/utils.js";
 
+const RUNNER_ROW_RENDER_LIMIT = 800;
+
 function buildRunnerResponse(result, request) {
   const rawBody = String(result?.body || "");
   const status = Number(result?.status || 0);
@@ -125,6 +127,21 @@ export function CollectionRunner({ workspace, collection }) {
     const tests = results.flatMap((item) => item.tests || []);
     return { total: runItems.length, done: done.length, passed, failed, tests: tests.length };
   }, [results, runItems.length]);
+  const previewRows = useMemo(() => {
+    const rows = results.length ? results : runItems.map(({ request, index, id, dataRowName }) => ({
+      id,
+      name: request.name,
+      method: request.method,
+      url: request.url,
+      dataRowName,
+      status: "queued",
+      duration: "-",
+      tests: [],
+      error: "",
+    }));
+    return rows.length > RUNNER_ROW_RENDER_LIMIT ? rows.slice(0, RUNNER_ROW_RENDER_LIMIT) : rows;
+  }, [results, runItems]);
+  const hiddenPreviewRows = Math.max(0, (results.length || runItems.length) - previewRows.length);
 
   function patchResult(id, patch) {
     setResults((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
@@ -435,17 +452,7 @@ export function CollectionRunner({ workspace, collection }) {
           <div>Assertions</div>
         </div>
         <div className="thin-scrollbar h-full min-h-0 overflow-auto">
-          {(results.length ? results : runItems.map(({ request, index, id, dataRowName }) => ({
-            id,
-            name: request.name,
-            method: request.method,
-            url: request.url,
-            dataRowName,
-            status: "queued",
-            duration: "-",
-            tests: [],
-            error: "",
-          }))).map((item, index) => (
+          {previewRows.map((item, index) => (
             <div key={item.id} className="kivo-row-hover kivo-quiet-divider grid grid-cols-[52px_92px_minmax(0,1.4fr)_86px_92px_92px_minmax(0,1fr)] items-center border-b px-3 py-2 text-[12px]">
               <div className="text-muted-foreground">{index + 1}</div>
               <div className="font-semibold text-foreground">{item.method || "GET"}</div>
@@ -467,6 +474,11 @@ export function CollectionRunner({ workspace, collection }) {
               </div>
             </div>
           ))}
+          {hiddenPreviewRows ? (
+            <div className="px-3 py-3 text-[11px] text-muted-foreground">
+              Showing {previewRows.length} rows. Reports still include all {results.length || runItems.length} runner items.
+            </div>
+          ) : null}
           {runItems.length === 0 ? (
             <div className="p-8 text-center text-[12px] text-muted-foreground">
               No HTTP or GraphQL requests found for this scope.

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, ChevronRight, Code2, Copy, Folder, FolderKanban, FolderPlus, Layers, MoreVertical, Pencil, Pin, Plus, Search, Settings, SquareKanban, Trash2, X } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
@@ -1787,14 +1787,16 @@ export function RequestsView({
     return `${collectionName}::${folderPath}`;
   }
 
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const normalizedSearchQuery = deferredSearchQuery.trim().toLowerCase();
+
   const filteredCollections = useMemo(() => {
     if (!activeWorkspace) return [];
-    if (!searchQuery.trim()) return activeWorkspace.collections;
+    if (!normalizedSearchQuery) return activeWorkspace.collections;
 
-    const query = searchQuery.toLowerCase();
     return activeWorkspace.collections.map(col => {
-      const matchesCol = col.name.toLowerCase().includes(query);
-      const matchedRequests = col.requests.filter(req => req.name.toLowerCase().includes(query));
+      const matchesCol = col.name.toLowerCase().includes(normalizedSearchQuery);
+      const matchedRequests = col.requests.filter(req => req.name.toLowerCase().includes(normalizedSearchQuery));
 
       if (matchesCol) {
         return col;
@@ -1804,7 +1806,7 @@ export function RequestsView({
       }
       return null;
     }).filter(Boolean);
-  }, [activeWorkspace, searchQuery]);
+  }, [activeWorkspace, normalizedSearchQuery]);
 
   useEffect(() => {
     if (activeWorkspaceName) {
@@ -2005,7 +2007,7 @@ export function RequestsView({
               </div>
             )}
             {filteredCollections.map((col) => {
-              const isColExpanded = expandedCollectionNames.includes(col.name) || searchQuery.trim() !== "";
+              const isColExpanded = expandedCollectionNames.includes(col.name) || normalizedSearchQuery !== "";
               const isColEditing = editingItemId === `col:${col.name}`;
               const isActive = col.name === activeCollectionName;
 
@@ -2149,7 +2151,7 @@ export function RequestsView({
                               function renderFolderNode(path) {
                                 const folderPath = normalizeFolderPath(path);
                                 const folderKey = makeFolderKey(col.name, folderPath);
-                                const isFolderExpanded = expandedFolderKeys.includes(folderKey) || searchQuery.trim() !== "";
+                                const isFolderExpanded = expandedFolderKeys.includes(folderKey) || normalizedSearchQuery !== "";
                                 const isFolderEditing = editingItemId === `fld:${col.name}:${folderPath}`;
                                 const childFolders = childFoldersByParent[folderPath] || [];
                                 const folderRequests = requestsByFolder[folderPath] || [];
@@ -2292,7 +2294,7 @@ export function RequestsView({
                           placeholder="Request name"
                         />
                       )}
-                      {!col.requests.length && !searchQuery && !creatingRequestInCollection && (
+                      {!col.requests.length && !normalizedSearchQuery && !creatingRequestInCollection && (
                         <button
                           type="button"
                           onClick={(event) => openCreateRequestMenu(event, effectiveWorkspaceName, col.name, "")}
@@ -2306,7 +2308,7 @@ export function RequestsView({
                 </div>
               );
             })}
-            {!filteredCollections.length && searchQuery && (
+            {!filteredCollections.length && normalizedSearchQuery && (
               <div className="text-center py-8 text-muted-foreground text-[12px]">
                 No results found for "{searchQuery}"
               </div>
