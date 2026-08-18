@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card.jsx";
 import { cn } from "@/lib/utils.js";
 import { filterJson } from "@/lib/json-filter.js";
 import { exportResponseFile } from "@/lib/http-client.js";
+import { getHeaderValue, getResponseDownloadName } from "@/lib/response-utils.js";
 import { CookieManagerModal, parseSetCookieString } from "@/components/workspace/CookieManagerModal.jsx";
 
 import { JsonTree } from "@/components/ui/JsonTree.jsx";
@@ -74,7 +75,7 @@ export function ResponsePane({
 }) {
   const tone = getTone(response.status);
 
-  const contentType = Object.entries(response.headers).find(([k]) => k.toLowerCase() === 'content-type')?.[1]?.toLowerCase() || "";
+  const contentType = getHeaderValue(response.headers, "content-type").toLowerCase();
   const isHtml = contentType.includes("text/html");
   const isJson = response.isJson;
   const isBinary = Boolean(response.isBinary);
@@ -207,10 +208,10 @@ export function ResponsePane({
   async function handleSaveResponseFile() {
     try {
       const selected = await save({
-        defaultPath: isBinary ? "response.bin" : "response.json",
+        defaultPath: getResponseDownloadName({ ...response, isBinary, contentType }, response.headers),
         filters: isBinary
           ? [{ name: "Binary", extensions: ["bin"] }, { name: "All Files", extensions: ["*"] }]
-          : [{ name: "JSON", extensions: ["json"] }],
+          : [{ name: "Response", extensions: ["json", "txt", "html", "xml", "yaml", "csv"] }, { name: "All Files", extensions: ["*"] }],
       });
       if (!selected || typeof selected !== "string") {
         return;
