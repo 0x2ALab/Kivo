@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { validateScriptSource } from "../src/lib/script-sandbox.js";
+import { MAX_SCRIPT_SOURCE_CHARS, validateScriptSource } from "../src/lib/script-sandbox.js";
 
 test("validateScriptSource allows kivo api usage", () => {
   assert.equal(validateScriptSource("kivo.request.addHeader('X-Test', '1');"), "");
@@ -18,4 +18,8 @@ test("validateScriptSource blocks constructor escape attempts", () => {
 test("validateScriptSource blocks module runtime probes", () => {
   assert.equal(validateScriptSource("process.env"), "Blocked unsafe script token: process");
   assert.equal(validateScriptSource("await import('node:fs')"), "Blocked unsafe script token: import");
+});
+
+test("validateScriptSource blocks oversized scripts", () => {
+  assert.match(validateScriptSource("x".repeat(MAX_SCRIPT_SOURCE_CHARS + 1)), /Script is too large/);
 });
